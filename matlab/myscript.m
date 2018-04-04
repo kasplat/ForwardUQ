@@ -52,8 +52,6 @@ end
 % Then you can repeat these steps for other threshold values.
 %
 %% Threshold code
-min_intensity_all = min(va(label>-1));
-max_intensity_all = max(va(label>-1));  % -1 so that it includes 0. Could be phrased better but it works
 min_intensity_tissue = min(va(label>0));
 max_intensity_tissue = max(va(label>0));
 % normal tissue : intensity< 20% of intensities
@@ -62,30 +60,26 @@ max_intensity_tissue = max(va(label>0));
 u = max_intensity_tissue; l = min_intensity_tissue;  d= u-l;
 step_size1=1;
 step_size2=1;
-
-thresholds = zeros(size(1:step_size1:100,2)*(size(1:step_size2:100,2)-1)/2,2);
+% Create the zero'd out arrays. Making it larger than necessary since extra
+% rows will be deleted later anyways.
+thresholds_relative = zeros(size(1:step_size1:100,2)*(size(1:step_size2:100,2)-1)/2,4);
+thresholds_absolute = zeros(size(1:step_size1:100,2)*(size(1:step_size2:100,2)-1)/2,2);
 row_num = 0;
-for i=1:step_size1:100
-    for j = i+1:step_size2:100 
-         row_num = row_num + 1;
-        thresholds(row_num, 1)=(l+d*i/100);
-        thresholds(row_num, 2)=(l+d*j/100);
+% set all thresholds
+for i=15:step_size1:25
+    for j = 10:step_size2:60
+        row_num = row_num + 1;
+        thresholds_relative(row_num, 1)=l+d*i/100;
+        thresholds_relative(row_num, 2)=l+d*j/100;
+        thresholds_relative(row_num, 3)=i;
+        thresholds_relative(row_num, 4)=j;
+        thresholds_absolute(row_num, 1)=l+d*i/100;
+        t1 = thresholds_absolute(row_num, 1);
+        thresholds_absolute(row_num, 2)=t1+(u-t1)*j/100;
     end
 end
-thresholds = thresholds(1:row_num,:);  % remove extra rows
-% define thresholds over all
-thresholds_all = zeros(size(1:step_size1:100,2)*(size(1:step_size2:100,2)-1)/2,2);
-row_num = 0;
-u = max_intensity_all; l = min_intensity_all;  d= u-l;
-for i=1:step_size1:100
-    for j = i+1:step_size2:100 
-         row_num = row_num + 1;
-        thresholds_all(row_num, 1)=(l+d*i/100);
-        thresholds_all(row_num, 2)=(l+d*j/100);
-    end
-end
-thresholds_all = thresholds_all(1:row_num,:);  % remove extra rows
-
+thresholds_relative = thresholds_relative(1:row_num,:);  % remove extra rows
+thresholds_absolute = thresholds_absolute(1:row_num,:);
 
 
 %% generate labels
@@ -95,11 +89,11 @@ for i = 1:numel(va)
     if value == 0
         continue
     else
-        for j= 1:length(thresholds) % go through all rows
+        for j= 1:length(thresholds_relative) % go through all rows
             % loop through all lows using my spreadsheet
-            if value < thresholds(j,1)  % if less than low
+            if value < thresholds_relative(j,1)  % if less than low
                 labelled_image(i,1) = labelled_image(i,1) + 1; % increment low
-            elseif value < thresholds_all(j,2) % if less than high
+            elseif value < thresholds_absolute(j,2) % if less than high
                 labelled_image(i,2) = labelled_image(i,2) + 1; % increment middle
             else % must be high
                 labelled_image(i,3) = labelled_image(i,3) + 1; % increment high
@@ -112,35 +106,45 @@ end
 %% generate image
 figure
 step_size = 2;
-labels_thresholds=zeros(105,101,size(thresholds,1));
-for i = 10
-     for t_row = 1:step_size:size(thresholds,1)
+labels_thresholds=zeros(105,101,size(thresholds_relative,1));
+for i = 2:13
+     for t_row = 1:step_size:size(thresholds_relative,1)
          im = zeros(105,101); % zeroed out image
          for x = 1:105
              for y = 1:101
                 if label(x,y,i)>0
-                    if va(x,y,i) < thresholds(t_row,1)
-                        im(x,y) = 3;  % low
-                    elseif va(x,y,i) < thresholds(t_row,2)
-                        im(x,y) = 2;  % medium
+                    if va(x,y,i) < thresholds_absolute(t_row,1)
+                        im(x,y) = 1;  % healthy
+                    elseif va(x,y,i) < thresholds_absolute(t_row,2)
+                        im(x,y) = 2;  % border
                     else
-                        im(x,y) = 1;  % high
+                        im(x,y) = 3;  % scar
                     end
                 else
                     im(x,y)=0;
                 end
              end
          end
+         subplot(1,2,1)
          imshow(im,[0,3])
-         title(['t1: ' int2str(thresholds(t_row,1)) ' t2: ' int2str(thresholds(t_row,2))])
-         pause(.1);
+         title(['t1: ' int2str(thresholds_relative(t_row,1)) ' t2: ' int2str(thresholds_relative(t_row,2))])
+         xlabel(['percentage: t1: ' int2str(thresholds_relative(t_row,3)) '%. t2: ' int2str(thresholds_relative(t_row,4)) '%.' ])
+         subplot(1,2,2)
+         imshow((label(:,:,i)),[ min(min(label(:,:,i))) max(max(label(:,:,i)))]);
+         title(['JHU labels, layer:' int2str(i)])
+         va_i = va(:,:,i);
+         label_i = label(:,:,i);
+         xlabel(['min intensity: ' int2str(min(va_i(label_i>0))) ' max intensity: ' int2str(max(max(va_i(label_i>0)))) ])
+         %saveas(gcf, char(sprintf("/home/kesavan/MatlabProjects/ForwardUQ/matlab/heartpics/%i/heart_layer_%i", i, t_row)));
+         pause(.05);
      end
-end 
+end
+g
 
 %% find optimal clusters
 idexregion = kmeans(labelled_image,3);
 out = anova(idexregion);
-eva = evalclusters(labelled_image,'kmeans','CalinskiHarabasz','KList',20:30);
+eva = evalclusters(labelled_image,'kmeans','CalinskiHarabasz','KList',0:10);
 
 %% color display
 %color each pixel according to their most common classification and then
