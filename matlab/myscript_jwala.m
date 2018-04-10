@@ -1,22 +1,30 @@
 %% read the files
-addpath('/Users/jd1336/Google Drive/Team_ForwardUQ/code_data/ReadData3D_version1k/');
+addpath('/Users/jd1336/Google Drive/Team_ForwardUQ/ForwardUQ/matlab/ReadData3D_version1k/');
 
 [label,label_info]=ReadData3D('Label.mha');
 [va,va_info]=ReadData3D('VA_ICD_004_SA.mha');
 
 %% disply the image
-for i = 1: 15
-    imshow(va(:,:,i),[min(min(va(:,:,i))) max(max(va(:,:,i))) ]);
-    min_max_imgint(i,:) = [min(min(va(:,:,i))) max(max(va(:,:,i))) ];
-%     pause;
-end 
+for j = 1:100
+    for i = 1:15 
+        subplot(1,2,1)
+        imshow(va(:,:,i),[min(min(va(:,:,i))) max(max(va(:,:,i))) ])
+        title('Image','FontSize',18)
+        min_max_imgint(i,:) = [min(min(va(:,:,i))) max(max(va(:,:,i))) ];
+        subplot(1,2,2)
+        imshow((label(:,:,i)),[ min(min(label(:,:,i))) max(max(label(:,:,i)))]);
+        title('Segmentation','FontSize',18)
+  pause(0.2)
+    end
+   pause(1)
+end
 
 %% display the labels
 
 for i = 1: 15
     imshow((label(:,:,i)),[ min(min(label(:,:,i))) max(max(label(:,:,i)))]);
     
-%      pause
+    pause
 end 
 
 
