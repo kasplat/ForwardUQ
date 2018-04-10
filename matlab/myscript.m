@@ -1,6 +1,6 @@
 %% read the files
-%addpath('/Users/jd1336/Google Drive/Team_ForwardUQ/code_data/ReadData3D_version1k/');
-addpath('/home/kesavan/MatlabProjects/ForwardUQ/matlab/ReadData3D_version1k/');
+addpath('/Users/jd1336/Google Drive/Team_ForwardUQ/ForwardUQ/matlab/ReadData3D_version1k/');
+%addpath('/home/kesavan/MatlabProjects/ForwardUQ/matlab/ReadData3D_version1k/');
 [label,label_info]=ReadData3D('Label.mha');
 [va,va_info]=ReadData3D('VA_ICD_004_SA.mha');
 
@@ -51,11 +51,13 @@ end
 % value is too big. 
 % Then you can repeat these steps for other threshold values.
 %
+
+
 %% Threshold code
 min_intensity_tissue = min(va(label>0));
 max_intensity_tissue = max(va(label>0));
-% normal tissue : intensity< 20% of intensities
-% gray tissue   : intensity< 40% of the intensities
+% normal tissue : intensity< t1% of intensities
+% gray tissue   : intensity< t2% of the intensities
 % remainder as scar
 u = max_intensity_tissue; l = min_intensity_tissue;  d= u-l;
 step_size1=1;
