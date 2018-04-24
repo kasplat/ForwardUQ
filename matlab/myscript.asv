@@ -133,18 +133,13 @@ for i = 3
          subplot(1,2,1)
          
          healthy_only = labelled_image(labelled_image(:,3) == 0,1);
-         num_healthy_only = size(healthy_only,1);
          scar_only = labelled_image(labelled_image(:,1) == 0,3);
-         num_scar_only = size(scar_only,1);
-         
-         num_total = size(labelled_image,1);
          
          imshow(im,[0,3])
          title(['t1: ' int2str(thresholds_relative(t_row,1)) ' t2: ' int2str(thresholds_relative(t_row,2))])
          xlabel({['percentage: t1: ', int2str(thresholds_relative(t_row,3)), '%. t2: ',...
              int2str(thresholds_relative(t_row,4)), '%.' ];
-             ['Number of Healthy only tissue: ', int2str(num_healthy_only),...
-             ];[' or ', num2str(num_healthy_only / num_total), '%.']})
+             ['Number of Healthy only tissue: ', int2str(size(healthy_only, 1))]})
          subplot(1,2,2)
          imshow((label(:,:,i)),[ min(min(label(:,:,i))) max(max(label(:,:,i)))]);
          title(['JHU labels, layer:' int2str(i)])
@@ -152,8 +147,8 @@ for i = 3
          label_i = label(:,:,i);
          xlabel({['min intensity: ', int2str(min(va_i(label_i>0))),...
              ' max intensity: ', int2str(max(max(va_i(label_i>0)))) ];...
-                ['Number of Scar only tissue: ', int2str(num_scar_only),...
-                ];[' or ', num2str(num_scar_only / num_total), '%.']})
+                ['Number of Scar only tissue: ', int2str(size(scar_only, 1), ' or ',...
+                )]})
          %saveas(gcf, char(sprintf("/home/kesavan/MatlabProjects/ForwardUQ/matlab/heartpics/%i/heart_layer_%i", i, t_row)));
          pause(.05);
      end
